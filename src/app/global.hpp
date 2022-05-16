@@ -20,7 +20,7 @@ public:
 
 	static void msg_box(std::string title, std::string message)
 	{
-		SDL_ShowSimpleMessageBox(0, &title[0], &message[0], global::window);
+		SDL_ShowSimpleMessageBox(0, title.c_str(), message.c_str(), global::window);
 	}
 
 	static SDL_Window* window;

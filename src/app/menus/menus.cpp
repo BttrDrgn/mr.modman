@@ -113,7 +113,7 @@ void menus::update()
 
 				ImGui::BeginTooltip();
 				ImGui::Text("Set a custom path for your mods to load from.");
-				ImGui::Text("By default, the mods will load from:\n%s", &path[0]);
+				ImGui::Text("By default, the mods will load from:\n%s", path.c_str());
 				ImGui::EndTooltip();
 			}
 
@@ -164,7 +164,7 @@ void menus::update()
 
 				if (!fs::exists(path))
 				{
-					logger::log_error(logger::va("File \"%s\" not found. Did you select a game path?", &path[0]));
+					logger::log_error(logger::va("File \"%s\" not found. Did you select a game path?", path.c_str()));
 					ImGui::End();
 					return;
 				}
@@ -191,12 +191,12 @@ void menus::update()
 
 				if (!fs::exists(mod_path))
 				{
-					logger::log_info(logger::va("\"%s\" created at \"%s\"", menus::game_name_buffer, &mod_path[0]));
+					logger::log_info(logger::va("\"%s\" created at \"%s\"", menus::game_name_buffer, mod_path.c_str()));
 					fs::mkdir(mod_path.append("\\_global"));
 				}
 				else
 				{
-					logger::log_error(logger::va("\"%s\" already exists at \"%s\"!", menus::game_name_buffer, &fs::get_pref_dir().append("mods\\")[0]));
+					logger::log_error(logger::va("\"%s\" already exists at \"%s\"!", menus::game_name_buffer, fs::get_pref_dir().append("mods\\").c_str()));
 					ImGui::End();
 					return;
 				}
@@ -207,9 +207,9 @@ void menus::update()
 					game_cwd.append(temp[i] + "\\");
 				}
 
-				std::string ini = logger::va("[game]\nPath=%s\nCWD=%s", menus::game_path_buffer, &game_cwd[0]);
-				ini_t* ini_t = ini_create(&ini[0], std::strlen(&ini[0]));
-				ini_save(ini_t, &config_path.append("\\config.ini")[0]);
+				std::string ini = logger::va("[game]\nPath=%s\nCWD=%s", menus::game_path_buffer, game_cwd.c_str());
+				ini_t* ini_t = ini_create(ini.c_str(), std::strlen(ini.c_str()));
+				ini_save(ini_t, config_path.append("\\config.ini").c_str());
 
 				menus::current_game = {name, menus::game_path_buffer, game_cwd};
 
@@ -238,7 +238,7 @@ void menus::menu_bar()
 		{
 			if (ImGui::Button("Play"))
 			{
-				logger::log_debug(logger::va("loader.exe --exe %s --cwd %s", &menus::current_game.path[0], &menus::current_game.cwd[0]));
+				logger::log_debug(logger::va("loader.exe --exe %s --cwd %s", menus::current_game.path.c_str(), menus::current_game.cwd.c_str()));
 
 				STARTUPINFOA startup_info;
 				PROCESS_INFORMATION process_info;
@@ -247,19 +247,23 @@ void menus::menu_bar()
 				memset(&process_info, 0, sizeof(process_info));
 				startup_info.cb = sizeof(startup_info);
 
+				logger::log_debug(fs::get_cur_dir());
+
 				CreateProcessA
 				(
-					&fs::get_cur_dir().append("loader.exe")[0],
-					&logger::va("--exe %s --cwd %s", &menus::current_game.path[0], &menus::current_game.cwd[0])[0],
+					fs::get_cur_dir().append("loader.exe").c_str(),
+					logger::va("--exe %s --cwd %s", menus::current_game.path, menus::current_game.cwd).data(),
 					nullptr,
 					nullptr,
 					false,
 					0,
 					nullptr,
-					&fs::get_cur_dir()[0],
+					fs::get_cur_dir().c_str(),
 					&startup_info,
 					&process_info
 				);
+				
+				logger::log_debug(logger::va("%i", GetLastError()));
 			}
 		}
 
@@ -287,7 +291,7 @@ void menus::console()
 	{
 		for (auto entry : menus::console_output)
 		{
-			ImGui::Text(&entry[0]);
+			ImGui::Text(entry.c_str());
 		}
 
 		ImGui::EndChild();
@@ -300,11 +304,11 @@ void menus::load_game()
 	{
 		for (auto game : menus::games)
 		{
-			if (ImGui::Button(&game[0]))
+			if (ImGui::Button(game.c_str()))
 			{
-				ini_t* ini = ini_load(&fs::get_pref_dir().append(logger::va("mods\\%s\\config.ini", &game[0]))[0]);
+				ini_t* ini = ini_load(fs::get_pref_dir().append(logger::va("mods\\%s\\config.ini", game.c_str())).c_str());
 				menus::current_game = {game, ini_get(ini, "game", "path"), ini_get(ini, "game", "cwd")};
-				logger::log_info(logger::va("%s loaded!", &menus::current_game.name[0]));
+				logger::log_info(logger::va("%s loaded!", menus::current_game.name));
 			}
 		}
 
@@ -320,7 +324,7 @@ void menus::build_font(ImGuiIO& io)
 
 	if (fs::exists(font))
 	{
-		io.Fonts->AddFontFromFileTTF(&font[0], 18.0f);
+		io.Fonts->AddFontFromFileTTF(font.c_str(), 18.0f);
 
 		static ImFontConfig cfg;
 		static ImWchar emoji_ranges[] = { 0x1, 0x1FFFF, 0 };
@@ -329,7 +333,7 @@ void menus::build_font(ImGuiIO& io)
 		{
 			cfg.MergeMode = true;
 			cfg.OversampleH = cfg.OversampleV = 1;
-			io.Fonts->AddFontFromFileTTF(&emoji[0], 12.0f, &cfg, emoji_ranges);
+			io.Fonts->AddFontFromFileTTF(emoji.c_str(), 12.0f, &cfg, emoji_ranges);
 		}
 
 		if (fs::exists(font_jp))
@@ -337,7 +341,7 @@ void menus::build_font(ImGuiIO& io)
 			ImFontConfig cfg;
 			cfg.OversampleH = cfg.OversampleV = 1;
 			cfg.MergeMode = true;
-			io.Fonts->AddFontFromFileTTF(&font_jp[0], 18.0f, &cfg, io.Fonts->GetGlyphRangesJapanese());
+			io.Fonts->AddFontFromFileTTF(font_jp.c_str(), 18.0f, &cfg, io.Fonts->GetGlyphRangesJapanese());
 		}
 	}
 }
