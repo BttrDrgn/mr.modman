@@ -16,12 +16,25 @@ workspace "Mr. Modman"
 		"../deps/imgui/",
 	}
 
+	buildoptions {
+		"/Zm200",
+		"/bigobj",
+	}
+
+	defines {
+		"NOMINMAX",
+		"WIN32_LEAN_AND_MEAN",
+		"_CRT_SECURE_NO_WARNINGS",
+		"_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS",
+	}
+
 	flags {
+		"noincrementallink",
+		"no64bitchecks",
 		"shadowedvariables",
 		"undefinedidentifiers",
 		"multiprocessorcompile",
 	}
-
 	platforms {
 		"Win-x86",
 	}
@@ -117,6 +130,29 @@ workspace "Mr. Modman"
 			"../src/utils/logger/**",
 
 			"../src/app/resource/**",
+		}
+
+	project "loader"
+		language "c++"
+		kind "windowedapp"
+		warnings "off"
+
+		files {
+			"../src/loader/**",
+		}
+
+		includedirs {
+			"../src/loader/",
+		}
+
+		--Required for the loader to load the binary
+		linkoptions {
+			"/NXCOMPAT:NO",
+			"/IGNORE:4254",
+			"/DYNAMICBASE:NO",
+			"/SAFESEH:NO",
+			"/LARGEADDRESSAWARE",
+			"/LAST:.main",
 		}
 
 	group "Dependencies"

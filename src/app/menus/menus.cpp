@@ -86,9 +86,10 @@ void menus::update()
 			ImGui::Text("Game Path:");
 			ImGui::SameLine();
 			ImGui::InputText("##game_path", menus::game_path_buffer, sizeof(menus::game_path_buffer));
+
 			if (ImGui::Button("Browse##game"))
 			{
-				fs::browse(menus::game_path_buffer, "Executable (.exe)\0*.exe\0", "Select your game executable");
+				fs::browse(menus::game_path_buffer, "Executable (.exe)\0*.exe\0\0", "Select your game executable");
 			}
 
 			ImGui::NewLine();
@@ -145,6 +146,7 @@ void menus::update()
 				std::string custom_path = menus::custom_dir_buffer;
 				std::string mod_path;
 				std::string config_path;
+				std::string game_cwd;
 
 				if (std::strlen(menus::game_name_buffer) <= 0)
 				{
@@ -199,15 +201,27 @@ void menus::update()
 					return;
 				}
 
-				ini_save(ini_create(&logger::va("[game]\nPath=%s\n", menus::game_path_buffer)[0],
-					strlen(&logger::va("[game]\nPath=%s\n", menus::game_path_buffer)[0])), &config_path.append("\\config.ini")[0]);
+				std::vector<std::string> temp = logger::split(path, "\\");
+				for (auto i = 0; i < temp.size() - 1; i++)
+				{
+					game_cwd.append(temp[i] + "\\");
+				}
 
+				std::string ini = logger::va("[game]\nPath=%s\nCWD=%s", menus::game_path_buffer, &game_cwd[0]);
+				ini_t* ini_t = ini_create(&ini[0], std::strlen(&ini[0]));
+				ini_save(ini_t, &config_path.append("\\config.ini")[0]);
+
+				menus::current_game = {name, menus::game_path_buffer, game_cwd};
+
+				logger::log_info(logger::va("Finished setup for %s!", menus::game_name_buffer));
+				settings::update();
 
 				menus::show_new_game = false;
 				menus::clear_buffer(menus::game_name_buffer, sizeof(menus::game_name_buffer));
 				menus::clear_buffer(menus::game_path_buffer, sizeof(menus::game_path_buffer));
 				menus::clear_buffer(menus::custom_dir_buffer, sizeof(menus::custom_dir_buffer));
 				menus::use_custom_dir = false;
+
 			}
 		}
 		ImGui::End();
@@ -219,6 +233,36 @@ void menus::menu_bar()
 	if (ImGui::BeginMenuBar())
 	{
 		menus::file();
+
+		if (menus::current_game.name != "")
+		{
+			if (ImGui::Button("Play"))
+			{
+				logger::log_debug(logger::va("loader.exe --exe %s --cwd %s", &menus::current_game.path[0], &menus::current_game.cwd[0]));
+
+				STARTUPINFOA startup_info;
+				PROCESS_INFORMATION process_info;
+
+				memset(&startup_info, 0, sizeof(startup_info));
+				memset(&process_info, 0, sizeof(process_info));
+				startup_info.cb = sizeof(startup_info);
+
+				CreateProcessA
+				(
+					&fs::get_cur_dir().append("loader.exe")[0],
+					&logger::va("--exe %s --cwd %s", &menus::current_game.path[0], &menus::current_game.cwd[0])[0],
+					nullptr,
+					nullptr,
+					false,
+					0,
+					nullptr,
+					&fs::get_cur_dir()[0],
+					&startup_info,
+					&process_info
+				);
+			}
+		}
+
 		ImGui::EndMenuBar();
 	}
 }
@@ -228,7 +272,7 @@ void menus::file()
 	if (ImGui::BeginMenu("File"))
 	{
 		if (ImGui::Button("New Game")) menus::show_new_game = true;
-		ImGui::Button("Load Game");
+		menus::load_game();
 		ImGui::Text("__________");
 		if(ImGui::Button("Exit")) global::shutdown = true;
 		ImGui::EndMenu();
@@ -247,6 +291,24 @@ void menus::console()
 		}
 
 		ImGui::EndChild();
+	}
+}
+
+void menus::load_game()
+{
+	if (ImGui::BeginMenu("Load Game"))
+	{
+		for (auto game : menus::games)
+		{
+			if (ImGui::Button(&game[0]))
+			{
+				ini_t* ini = ini_load(&fs::get_pref_dir().append(logger::va("mods\\%s\\config.ini", &game[0]))[0]);
+				menus::current_game = {game, ini_get(ini, "game", "path"), ini_get(ini, "game", "cwd")};
+				logger::log_info(logger::va("%s loaded!", &menus::current_game.name[0]));
+			}
+		}
+
+		ImGui::EndMenu();
 	}
 }
 
@@ -293,3 +355,5 @@ char menus::custom_dir_buffer[MAX_PATH];
 bool menus::show_new_game = false;
 
 std::vector<std::string> menus::console_output;
+std::vector<std::string> menus::games;
+game_t menus::current_game;

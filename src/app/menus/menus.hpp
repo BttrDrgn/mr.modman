@@ -1,6 +1,10 @@
 #pragma once
 
-//Could maybe do some fancy stuff with this later
+struct game_t
+{
+	std::string name, path, cwd;
+};
+
 class menus
 {
 public:
@@ -17,7 +21,8 @@ public:
 	static char custom_dir_buffer[MAX_PATH];
 
 	static std::vector<std::string> console_output;
-
+	static std::vector<std::string> games;
+	static game_t current_game;
 
 private:
 	static void build_font(ImGuiIO& io);
@@ -30,6 +35,8 @@ private:
 
 	static void menu_bar();
 	static void file();
+
+	static void load_game();
 
 	static void console();
 

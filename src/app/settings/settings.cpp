@@ -23,6 +23,8 @@ void settings::update()
 	}
 
 	ini_free(settings::config);
+
+	menus::games = fs::get_all_dirs(fs::get_pref_dir().append("mods\\"));
 }
 
 bool settings::get_boolean(const char* bool_text)

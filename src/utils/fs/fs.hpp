@@ -14,6 +14,11 @@ public:
 	//Copies important files to the pref directory
 	static void init()
 	{
+		if (!fs::exists(fs::get_pref_dir().append("mods\\")))
+		{
+			fs::mkdir(fs::get_pref_dir().append("mods\\"));
+		}
+
 		if (fs::exists("fonts"))
 		{
 			fs::move(fs::get_cur_dir().append("fonts"), fs::get_pref_dir().append("fonts"));
@@ -53,6 +58,18 @@ public:
 	static void mkdir(const std::string& path)
 	{
 		std::filesystem::create_directories(path);
+	}
+
+	static std::vector<std::string> get_all_dirs(const std::string& path)
+	{
+		std::vector<std::string> retn;
+		for (const auto& entry : std::filesystem::directory_iterator(path))
+		{
+			std::vector<std::string> temp = logger::split(entry.path().string(), "\\");
+			retn.emplace_back(temp[temp.size() - 1]);
+		}
+
+		return retn;
 	}
 
 	static std::string read(const std::string& path)
@@ -113,7 +130,7 @@ public:
 		browse.lpstrFilter = filter;
 		browse.lpstrFile = buffer;
 		browse.nMaxFile = MAX_PATH;
-		browse.lpstrTitle = &message[0];
+		browse.lpstrTitle = message;
 		browse.Flags = 0x00001000;
 
 		GetOpenFileNameA(&browse);
