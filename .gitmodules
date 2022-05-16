@@ -1,0 +1,9 @@
+[submodule "deps/SDL"]
+	path = deps/SDL
+	url = https://github.com/libsdl-org/SDL
+[submodule "deps/imgui"]
+	path = deps/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "deps/ini_rw"]
+	path = deps/ini_rw
+	url = https://github.com/nightmareci/ini_rw
