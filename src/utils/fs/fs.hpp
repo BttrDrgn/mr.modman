@@ -111,7 +111,7 @@ public:
 				if (std::filesystem::is_directory(p))
 				{
 					std::filesystem::create_directory(dest);
-					fs::move(&p.string()[0], &dest.string()[0], false);
+					fs::move(p.string().c_str(), dest.string().c_str(), false);
 				}
 				else
 				{
@@ -123,8 +123,11 @@ public:
 
 	static void browse(char* buffer, char* filter, char* message)
 	{
+		std::string cwd = fs::get_cur_dir();
+
 		OPENFILENAMEA browse;
 		memset(&browse, 0, sizeof(browse));
+		browse.lpstrInitialDir = cwd.c_str();
 		browse.lStructSize = sizeof(browse);
 		browse.hwndOwner = global::hwnd;
 		browse.lpstrFilter = filter;
@@ -134,5 +137,7 @@ public:
 		browse.Flags = 0x00001000;
 
 		GetOpenFileNameA(&browse);
+
+		SetCurrentDirectoryA(cwd.c_str());
 	}
 };
