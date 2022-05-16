@@ -50,6 +50,11 @@ public:
 		}
 	}
 
+	static void mkdir(const std::string& path)
+	{
+		std::filesystem::create_directories(path);
+	}
+
 	static std::string read(const std::string& path)
 	{
 		std::ifstream in(path);

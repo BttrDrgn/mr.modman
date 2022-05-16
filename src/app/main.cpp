@@ -5,17 +5,9 @@
 #include "settings/settings.hpp"
 #include "fs/fs.hpp"
 
-#ifndef OVERLAY
 #include "window/window.hpp"
-#else
-#include "hook/impl/d3d9_impl.h"
-#include "hook/impl/d3d10_impl.h"
-#include "hook/impl/d3d11_impl.h"
-#include "hook/impl/opengl3_impl.h"
-#endif
 
 //Main app init
-#ifndef OVERLAY
 void init_app()
 {
 #ifdef WIN32
@@ -78,10 +70,11 @@ void init_app()
 
 int main(int argc, char* argv[])
 {
+
 #ifdef _WIN32
 #ifdef DEBUG
 	AllocConsole();
-	SetConsoleTitleA("Radio.Garten Debug Console");
+	SetConsoleTitleA("Mr. Modman Debug Console");
 
 	std::freopen("CONOUT$", "w", stdout);
 	std::freopen("CONIN$", "r", stdin);
@@ -108,7 +101,6 @@ int main(int argc, char* argv[])
 						if (winver_info->dwSignature == 0xfeef04bd)
 						{
 							DWORD major_ver = (winver_info->dwFileVersionLS >> 16) & 0xffff;
-							logger::log("WINVER", logger::va("%u", major_ver));
 
 							if (major_ver < 22000)
 							{
@@ -139,65 +131,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
-#else
-HMODULE self;
-
-//Overlay init
-void init_overlay()
-{
-	settings::init();
-	if (kiero::init(kiero::RenderType::Auto) == kiero::Status::Success)
-	{
-		switch (kiero::getRenderType())
-		{
-#if KIERO_INCLUDE_D3D9
-		case kiero::RenderType::D3D9:
-			impl::d3d9::init();
-			break;
-#endif
-
-#if KIERO_INCLUDE_D3D10
-		case kiero::RenderType::D3D10:
-			impl::d3d10::init();
-			break;
-#endif
-
-#if KIERO_INCLUDE_D3D11
-		case kiero::RenderType::D3D11:
-			impl::d3d11::init();
-			break;
-#endif
-
-#if KIERO_INCLUDE_OPENGL
-		case kiero::RenderType::OpenGL:
-			impl::opengl3::init();
-			break;
-#endif
-
-		case kiero::RenderType::None:
-			FreeLibraryAndExitThread(self, 0);
-			break;
-		}
-	}
-}
-
-bool __stdcall DllMain(::HMODULE hmod, ::DWORD reason, ::LPVOID)
-{
-	if (reason == DLL_PROCESS_ATTACH)
-	{
-#ifdef DEBUG
-		AllocConsole();
-		SetConsoleTitleA("Radio.Garten Debug Console");
-
-		std::freopen("CONOUT$", "w", stdout);
-		std::freopen("CONIN$", "r", stdin);
-		logger::log_info("Attached!");
-#endif
-		DisableThreadLibraryCalls(hmod);
-		self = hmod;
-		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)init_overlay, 0, 0, 0);
-	}
-	return true;
-}
-#endif

@@ -4,6 +4,7 @@
 #include <cstdio>
 
 #include "../app/global.hpp"
+#include "../app/menus/menus.hpp"
 
 class logger
 {
@@ -11,6 +12,7 @@ public:
 	static void log(const std::string& type, const std::string& text)
 	{
 		std::cout << "[ " << type << " ] " << text << std::endl;
+		menus::console_output.emplace_back(std::string("[ " + type + " ] " + text));
 	}
 
 	static void log_info(const std::string& text)

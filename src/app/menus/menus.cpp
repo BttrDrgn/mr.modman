@@ -17,48 +17,21 @@ void menus::init()
 
 	menus::build_font(ImGui::GetIO());
 
-#ifndef OVERLAY
 	ImGui_ImplSDL2_InitForSDLRenderer(global::window, global::renderer);
 	ImGui_ImplSDLRenderer_Init(global::renderer);
-#endif
 }
 
 void menus::prepare()
 {
-#ifndef OVERLAY
 	ImGui_ImplSDLRenderer_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 	SDL_SetRenderDrawColor(global::renderer, 30, 30, 30, 255);
 	SDL_RenderClear(global::renderer);
-#else
-	switch (global::renderer)
-	{
-	case kiero::RenderType::D3D9:
-		ImGui_ImplDX9_NewFrame();
-		break;
-
-	case kiero::RenderType::D3D10:
-		ImGui_ImplDX10_NewFrame();
-		break;
-
-	case kiero::RenderType::D3D11:
-		ImGui_ImplDX11_NewFrame();
-		break;
-
-	case kiero::RenderType::OpenGL:
-		ImGui_ImplOpenGL3_NewFrame();
-		break;
-	}
-
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-#endif
 }
 
 void menus::present()
 {
-#ifndef OVERLAY
 	ImGui::Render();
 	ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
 
@@ -71,34 +44,10 @@ void menus::present()
 	{
 		SDL_RenderPresent(global::renderer);
 	}
-#else
-	ImGui::EndFrame();
-	ImGui::Render();
-
-	switch (global::renderer)
-	{
-	case kiero::RenderType::D3D9:
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-		break;
-
-	case kiero::RenderType::D3D10:
-		ImGui_ImplDX10_RenderDrawData(ImGui::GetDrawData());
-		break;
-
-	case kiero::RenderType::D3D11:
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-		break;
-
-	case kiero::RenderType::OpenGL:
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-		break;
-	}
-#endif
 }
 
 void menus::cleanup()
 {
-#ifndef OVERLAY
 	ImGui_ImplSDLRenderer_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
@@ -106,12 +55,10 @@ void menus::cleanup()
 	SDL_DestroyRenderer(global::renderer);
 	SDL_DestroyWindow(global::window);
 	SDL_Quit();
-#endif
 }
 
 void menus::update()
 {
-#ifndef OVERLAY
 	ImGui::SetNextWindowPos({ 0, 0 });
 	ImGui::SetNextWindowSize(global::resolution);
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
@@ -119,8 +66,10 @@ void menus::update()
 	if (ImGui::Begin("Mr. Modman", nullptr, flags))
 	{
 		menus::menu_bar();
+		menus::console();
 		ImGui::End();
 	}
+
 
 	if (menus::show_new_game)
 	{
@@ -194,30 +143,67 @@ void menus::update()
 				std::string name = menus::game_name_buffer;
 				std::string path = menus::game_path_buffer;
 				std::string custom_path = menus::custom_dir_buffer;
+				std::string mod_path;
+				std::string config_path;
 
-				if (name != "")
+				if (std::strlen(menus::game_name_buffer) <= 0)
 				{
+					logger::log_error(logger::va("Game Name invalid. Did you insert a game name?"));
+					ImGui::End();
+					return;
+				}
+
+				if (std::strlen(menus::game_path_buffer) <= 0)
+				{
+					logger::log_error(logger::va("Game Path invalid. Did you insert a game path?"));
 					ImGui::End();
 					return;
 				}
 
 				if (!fs::exists(path))
 				{
-					logger::log_debug(logger::va("%s not found", &path[0]));
+					logger::log_error(logger::va("File \"%s\" not found. Did you select a game path?", &path[0]));
 					ImGui::End();
 					return;
 				}
 
-				menus::show_new_game = false;
-
-				if (path == "")
+				if (menus::use_custom_dir)
 				{
-					logger::log_debug(path);
-
+					if (std::strlen(menus::custom_dir_buffer) <= 0)
+					{
+						logger::log_error(logger::va("Custom Mod Directory invalid. Did you insert a directory?"));
+						ImGui::End();
+						return;
+					}
+					else
+					{
+						mod_path = custom_path.append(logger::va("mods\\%s", menus::game_name_buffer));
+						config_path = mod_path;
+					}
 				}
-				
-				//fs::write();
+				else
+				{
+					mod_path = fs::get_pref_dir().append(logger::va("mods\\%s", menus::game_name_buffer));
+					config_path = mod_path;
+				}
 
+				if (!fs::exists(mod_path))
+				{
+					logger::log_info(logger::va("\"%s\" created at \"%s\"", menus::game_name_buffer, &mod_path[0]));
+					fs::mkdir(mod_path.append("\\_global"));
+				}
+				else
+				{
+					logger::log_error(logger::va("\"%s\" already exists at \"%s\"!", menus::game_name_buffer, &fs::get_pref_dir().append("mods\\")[0]));
+					ImGui::End();
+					return;
+				}
+
+				ini_save(ini_create(&logger::va("[game]\nPath=%s\n", menus::game_path_buffer)[0],
+					strlen(&logger::va("[game]\nPath=%s\n", menus::game_path_buffer)[0])), &config_path.append("\\config.ini")[0]);
+
+
+				menus::show_new_game = false;
 				menus::clear_buffer(menus::game_name_buffer, sizeof(menus::game_name_buffer));
 				menus::clear_buffer(menus::game_path_buffer, sizeof(menus::game_path_buffer));
 				menus::clear_buffer(menus::custom_dir_buffer, sizeof(menus::custom_dir_buffer));
@@ -226,8 +212,6 @@ void menus::update()
 		}
 		ImGui::End();
 	}
-
-#endif
 }
 
 void menus::menu_bar()
@@ -248,6 +232,21 @@ void menus::file()
 		ImGui::Text("__________");
 		if(ImGui::Button("Exit")) global::shutdown = true;
 		ImGui::EndMenu();
+	}
+}
+
+void menus::console()
+{
+	static ImVec2 size = { global::resolution.x - 10, 200 };
+	ImGui::SetNextWindowPos({ 5, global::resolution.y - 210 });
+	if (ImGui::BeginChild("Console", size, 1, 0))
+	{
+		for (auto entry : menus::console_output)
+		{
+			ImGui::Text(&entry[0]);
+		}
+
+		ImGui::EndChild();
 	}
 }
 
@@ -292,3 +291,5 @@ bool menus::use_custom_dir = false;
 char menus::custom_dir_buffer[MAX_PATH];
 
 bool menus::show_new_game = false;
+
+std::vector<std::string> menus::console_output;

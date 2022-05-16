@@ -16,6 +16,8 @@ public:
 	static bool use_custom_dir;
 	static char custom_dir_buffer[MAX_PATH];
 
+	static std::vector<std::string> console_output;
+
 
 private:
 	static void build_font(ImGuiIO& io);
@@ -28,6 +30,8 @@ private:
 
 	static void menu_bar();
 	static void file();
+
+	static void console();
 
 	static bool show_new_game;
 };
