@@ -1,4 +1,6 @@
 #include "loader.hpp"
+#include "../utils/logger/logger.hpp"
+#include "../utils/fs/fs.hpp"
 
 bool has_tls = false;
 unsigned long entry_point = 0;
@@ -229,10 +231,18 @@ void loader::load(const char* bin_name)
     }
 }
 
+char* game_name;
+char* pack_name;
+
+std::initializer_list<std::string> ext_whitelist
+{
+    ".dll",
+    ".asi",
+};
+
 int init()
 {
 #ifdef DEBUG
-    //Console
     AllocConsole();
     SetConsoleTitleA("Loader Debug Console");
     std::freopen("CONOUT$", "w", stdout);
@@ -248,6 +258,42 @@ int init()
         else if (!strcmp("--cwd", __argv[i]))
         {
             SetCurrentDirectoryA(__argv[i + 1]);
+        }
+        else if (!strcmp("--game", __argv[i]))
+        {
+            game_name = __argv[i + 1];
+        }
+        else if (!strcmp("--modpack", __argv[i]))
+        {
+            pack_name = __argv[i + 1];
+        }
+    }
+
+    //Load _global
+    std::string global = fs::get_pref_dir().append(logger::va("mods\\%s\\_global\\", game_name));
+    for (auto bin : fs::get_all_files(global))
+    {
+        for (auto ext : ext_whitelist)
+        {
+            if (logger::ends_with(bin, ext))
+            {
+                std::string to_load = global + bin;
+                LoadLibraryA(to_load.c_str());
+            }
+        }
+    }
+
+    //Load pack
+    std::string pack = fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name, pack_name));
+    for (auto bin : fs::get_all_files(fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name, pack_name))))
+    {
+        for (auto ext : ext_whitelist)
+        {
+            if (logger::ends_with(bin, ext))
+            {
+                std::string to_load = pack + bin;
+                LoadLibraryA(to_load.c_str());
+            }
         }
     }
 

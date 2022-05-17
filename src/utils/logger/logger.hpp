@@ -3,8 +3,9 @@
 #include <iostream>
 #include <cstdio>
 
-#include "../app/global.hpp"
+#ifndef LOADER
 #include "../app/menus/menus.hpp"
+#endif
 
 class logger
 {
@@ -12,7 +13,10 @@ public:
 	static void log(const std::string& type, const std::string& text)
 	{
 		std::cout << "[ " << type << " ] " << text << std::endl;
+
+#ifndef LOADER
 		menus::console_output.emplace_back(std::string("[ " + type + " ] " + text));
+#endif
 	}
 
 	static void log_info(const std::string& text)
@@ -46,7 +50,6 @@ public:
 		return std::string(result);
 	}
 
-#ifndef HELPER
 	static std::string get_toggle(bool input)
 	{
 		switch (input)
@@ -100,5 +103,10 @@ public:
 			c = std::toupper(c);
 		}));
 	}
-#endif
+
+	static bool ends_with(std::string const& value, std::string const& ending)
+	{
+		if (ending.size() > value.size()) return false;
+		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+	}
 };

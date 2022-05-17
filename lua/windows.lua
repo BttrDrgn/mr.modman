@@ -134,8 +134,19 @@ workspace "Mr. Modman"
 
 	project "loader"
 		language "c++"
+		cppdialect "c++17"
 		kind "windowedapp"
 		warnings "off"
+
+		defines "LOADER"
+		
+		dependson {
+			"SDL2",
+		}
+
+		links {
+			"SDL2",
+		}
 
 		files {
 			"../src/loader/**",
@@ -143,6 +154,7 @@ workspace "Mr. Modman"
 
 		includedirs {
 			"../src/loader/",
+			"../deps/SDL/include/",
 		}
 
 		--Required for the loader to load the binary

@@ -1,12 +1,11 @@
 #pragma once
 
-#ifndef HELPER
 #include <SDL.h>
-#endif
-
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+
+#include <commdlg.h>
 
 class fs
 {
@@ -60,13 +59,31 @@ public:
 		std::filesystem::create_directories(path);
 	}
 
+	static std::vector<std::string> get_all_files(const std::string& path)
+	{
+		std::vector<std::string> retn;
+		for (const auto& entry : std::filesystem::directory_iterator(path))
+		{
+			if (!entry.is_directory())
+			{
+				std::vector<std::string> temp = logger::split(entry.path().string(), "\\");
+				retn.emplace_back(temp[temp.size() - 1]);
+			}
+		}
+
+		return retn;
+	}
+
 	static std::vector<std::string> get_all_dirs(const std::string& path)
 	{
 		std::vector<std::string> retn;
 		for (const auto& entry : std::filesystem::directory_iterator(path))
 		{
-			std::vector<std::string> temp = logger::split(entry.path().string(), "\\");
-			retn.emplace_back(temp[temp.size() - 1]);
+			if (entry.is_directory())
+			{
+				std::vector<std::string> temp = logger::split(entry.path().string(), "\\");
+				retn.emplace_back(temp[temp.size() - 1]);
+			}
 		}
 
 		return retn;
@@ -121,6 +138,7 @@ public:
 		}
 	}
 
+#ifndef LOADER
 	static void browse(char* buffer, char* filter, char* message)
 	{
 		std::string cwd = fs::get_cur_dir();
@@ -140,4 +158,5 @@ public:
 
 		SetCurrentDirectoryA(cwd.c_str());
 	}
+#endif
 };

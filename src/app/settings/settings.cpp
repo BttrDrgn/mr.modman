@@ -1,3 +1,5 @@
+#include "global.hpp"
+
 #include "logger/logger.hpp"
 #include "fs/fs.hpp"
 

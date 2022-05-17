@@ -2,7 +2,8 @@
 
 struct game_t
 {
-	std::string name, path, cwd;
+	std::string name, path, cwd, pack;
+	std::vector<std::string> packs;
 };
 
 class menus
@@ -17,11 +18,14 @@ public:
 
 	static char game_path_buffer[MAX_PATH];
 	static char game_name_buffer[32];
+	static char pack_name_buffer[32];
 	static bool use_custom_dir;
 	static char custom_dir_buffer[MAX_PATH];
 
 	static std::vector<std::string> console_output;
 	static std::vector<std::string> games;
+	static std::vector<std::string> global_mods;
+	static std::vector<std::string> pack_mods;
 	static game_t current_game;
 
 private:
@@ -35,10 +39,20 @@ private:
 
 	static void menu_bar();
 	static void file();
+	static void packs();
 
 	static void load_game();
+	static void load_pack();
+
+	static void new_game();
+	static void new_pack();
+
+	static void mods();
 
 	static void console();
 
 	static bool show_new_game;
+	static bool show_new_packs;
+	static bool show_load_packs;
+	static bool show_mods;
 };
