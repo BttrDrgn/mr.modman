@@ -477,6 +477,7 @@ void menus::mods()
 				ImGui::EndMenuBar();
 			}
 
+			int count = 0;
 			for (auto mod : menus::global_mods)
 			{
 				ImGui::Text(mod.c_str());
@@ -500,13 +501,18 @@ void menus::mods()
 							ImGui::BeginTooltip();
 							ImGui::Text("Click to edit...");
 							ImGui::EndTooltip();
-						}
+						} 
 
 						ImGui::SameLine();
 					}
 				}
 
-				ImGui::Button(logger::va("X##%%s_global", mod.c_str()).c_str());
+				if (ImGui::Button(logger::va("X##%%s_global", mod.c_str()).c_str()))
+				{
+					fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod));
+					menus::global_mods.erase(menus::global_mods.begin() + count);
+				}
+				count++;
 			}
 			ImGui::End();
 		}
@@ -527,6 +533,7 @@ void menus::mods()
 				ImGui::EndMenuBar();
 			}
 
+			int count = 0;
 			for (auto mod : menus::pack_mods)
 			{
 				ImGui::Text(mod.c_str());
@@ -556,7 +563,12 @@ void menus::mods()
 					}
 				}
 
-				ImGui::Button(logger::va("X##%%s_pack", mod.c_str()).c_str());
+				if (ImGui::Button(logger::va("X##%%s_pack", mod.c_str()).c_str()))
+				{
+					fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod));
+					menus::pack_mods.erase(menus::pack_mods.begin() + count);
+				}
+				count++;
 			}
 			ImGui::End();
 		}
