@@ -24,7 +24,7 @@ SDL_HitTestResult input::hit_test_callback(SDL_Window* window, const SDL_Point* 
 {
 	SDL_HitTestResult report = SDL_HITTEST_NORMAL;
 
-	if (p->y <= 20 && p->x > 344)
+	if (p->y <= 20)
 	{
 		report = SDL_HITTEST_DRAGGABLE;
 	}
