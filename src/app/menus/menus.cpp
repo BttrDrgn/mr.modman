@@ -346,8 +346,8 @@ void menus::new_game()
 				menus::use_custom_dir = false;
 
 			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 }
 
