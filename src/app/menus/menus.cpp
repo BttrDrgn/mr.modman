@@ -458,12 +458,25 @@ void menus::mods()
 {
 	if (menus::show_mods)
 	{
-		ImGuiWindowFlags mods_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+		ImGuiWindowFlags mods_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
 		ImVec2 size = {300, 400};
 
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Global Mods", nullptr, mods_flags))
 		{
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("File##global"))
+				{
+					if(ImGui::Button("Open Directory##global"))
+					{
+						fs::open_folder(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\_global\\"));
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+
 			for (auto mod : menus::global_mods)
 			{
 				ImGui::Text(mod.c_str());
@@ -501,6 +514,18 @@ void menus::mods()
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Pack Mods", nullptr, mods_flags))
 		{
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu("File##pack"))
+				{
+					if (ImGui::Button("Open Directory##pack"))
+					{
+						fs::open_folder(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\" + menus::current_game.pack + "\\"));
+					}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
 
 			for (auto mod : menus::pack_mods)
 			{

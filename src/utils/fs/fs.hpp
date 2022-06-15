@@ -168,5 +168,10 @@ public:
 			ShellExecuteA(0, "edit", file, 0, 0, 0);
 		}
 	}
+
+	static void open_folder(const std::string& folder)
+	{
+		ShellExecuteA(global::hwnd, "explore", folder.c_str(), 0, 0, 1);
+	}
 #endif
 };
