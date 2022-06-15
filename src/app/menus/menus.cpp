@@ -217,9 +217,9 @@ void menus::new_game()
 
 			ImGui::NewLine();
 
-			ImGui::Text("Custom Mod Directory:");
-			ImGui::SameLine();
-			ImGui::Checkbox("##custom_dir", &menus::use_custom_dir);
+			//ImGui::Text("Custom Mod Directory:");
+			//ImGui::SameLine();
+			//ImGui::Checkbox("##custom_dir", &menus::use_custom_dir);
 
 			if (ImGui::IsItemHovered())
 			{
