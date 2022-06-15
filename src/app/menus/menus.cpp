@@ -460,10 +460,13 @@ void menus::mods()
 	{
 		ImGuiWindowFlags mods_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
 		ImVec2 size = {300, 400};
+		ImVec2 prev_pos;
 
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Global Mods", nullptr, mods_flags))
 		{
+			prev_pos = ImGui::GetWindowPos();
+
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("File##global"))
@@ -517,6 +520,7 @@ void menus::mods()
 			ImGui::End();
 		}
 
+		ImGui::SetNextWindowPos({ prev_pos.x + size.x, prev_pos.y }, ImGuiCond_Appearing);
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Pack Mods", nullptr, mods_flags))
 		{
