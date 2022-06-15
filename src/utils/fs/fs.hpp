@@ -158,5 +158,15 @@ public:
 
 		SetCurrentDirectoryA(cwd.c_str());
 	}
+
+	static void open_editor(const char* file)
+	{
+		ShellExecuteA(0, "open", file, 0, 0, 0);
+
+		if (GetLastError() == ERROR_NO_ASSOCIATION)
+		{
+			ShellExecuteA(0, "edit", file, 0, 0, 0);
+		}
+	}
 #endif
 };

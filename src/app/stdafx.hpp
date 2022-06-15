@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include <Windows.h>
+#include <shellapi.h>
 
 //Deps
 #include <imgui_freetype.h>

@@ -22,6 +22,7 @@ public:
 	static bool use_custom_dir;
 	static char custom_dir_buffer[MAX_PATH];
 
+	static std::initializer_list<std::string> settings_exts;
 	static std::vector<std::string> console_output;
 	static std::vector<std::string> games;
 	static std::vector<std::string> global_mods;

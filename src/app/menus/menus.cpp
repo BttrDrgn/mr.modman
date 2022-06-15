@@ -470,12 +470,27 @@ void menus::mods()
 				ImGui::SameLine();
 				ImGui::SetCursorPosX(size.x - 20);
 
-				if (logger::ends_with(mod, ".ini") || logger::ends_with(mod, ".cfg"))
+				for (auto ext : menus::settings_exts)
 				{
-					ImGui::SetCursorPosX(size.x - 42);
+					if (logger::ends_with(mod, ext))
+					{
+						ImGui::SetCursorPosX(size.x - 42);
 
-					ImGui::Button(logger::va("S##%%s_global", mod.c_str()).c_str());
-					ImGui::SameLine();
+						if (ImGui::Button(logger::va("S##%%s_global", mod.c_str()).c_str()))
+						{
+							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod);
+							fs::open_editor(file.c_str());
+						}
+
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::Text("Click to edit...");
+							ImGui::EndTooltip();
+						}
+
+						ImGui::SameLine();
+					}
 				}
 
 				ImGui::Button(logger::va("X##%%s_global", mod.c_str()).c_str());
@@ -486,12 +501,37 @@ void menus::mods()
 		ImGui::SetNextWindowSize(size);
 		if (ImGui::Begin("Pack Mods", nullptr, mods_flags))
 		{
+
 			for (auto mod : menus::pack_mods)
 			{
 				ImGui::Text(mod.c_str());
 				ImGui::SameLine();
 				ImGui::SetCursorPosX(size.x - 20);
-				ImGui::Button(logger::va("X##%s_pack", mod.c_str()).c_str());
+
+				for (auto ext : menus::settings_exts)
+				{
+					if (logger::ends_with(mod, ext))
+					{
+						ImGui::SetCursorPosX(size.x - 42);
+
+						if (ImGui::Button(logger::va("S##%%s_pack", mod.c_str()).c_str()))
+						{
+							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
+							fs::open_editor(file.c_str());
+						}
+
+						if (ImGui::IsItemHovered())
+						{
+							ImGui::BeginTooltip();
+							ImGui::Text("Click to edit...");
+							ImGui::EndTooltip();
+						}
+
+						ImGui::SameLine();
+					}
+				}
+
+				ImGui::Button(logger::va("X##%%s_pack", mod.c_str()).c_str());
 			}
 			ImGui::End();
 		}
@@ -546,6 +586,8 @@ bool menus::show_mods = false;
 
 std::vector<std::string> menus::global_mods;
 std::vector<std::string> menus::pack_mods;
+
+std::initializer_list<std::string> menus::settings_exts = {".ini", ".cfg"};
 
 std::vector<std::string> menus::console_output;
 std::vector<std::string> menus::games;
