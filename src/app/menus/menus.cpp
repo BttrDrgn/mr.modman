@@ -493,7 +493,7 @@ void menus::mods()
 					{
 						ImGui::SetCursorPosX(size.x - 42);
 
-						if (ImGui::Button(logger::va("S##%%s_global", mod.c_str()).c_str()))
+						if (ImGui::Button(logger::va("S##%s_global", mod.c_str()).c_str()))
 						{
 							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod);
 							fs::open_editor(file.c_str());
@@ -510,7 +510,7 @@ void menus::mods()
 					}
 				}
 
-				if (ImGui::Button(logger::va("X##%%s_global", mod.c_str()).c_str()))
+				if (ImGui::Button(logger::va("X##%s_global", mod.c_str()).c_str()))
 				{
 					fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod));
 					menus::global_mods.erase(menus::global_mods.begin() + count);
@@ -550,7 +550,7 @@ void menus::mods()
 					{
 						ImGui::SetCursorPosX(size.x - 42);
 
-						if (ImGui::Button(logger::va("S##%%s_pack", mod.c_str()).c_str()))
+						if (ImGui::Button(logger::va("S##%s_pack", mod.c_str()).c_str()))
 						{
 							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
 							fs::open_editor(file.c_str());
@@ -567,9 +567,10 @@ void menus::mods()
 					}
 				}
 
-				if (ImGui::Button(logger::va("X##%%s_pack", mod.c_str()).c_str()))
+				if (ImGui::Button(logger::va("X##%s_pack", mod.c_str()).c_str()))
 				{
-					fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod));
+					std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
+					fs::del(file);
 					menus::pack_mods.erase(menus::pack_mods.begin() + count);
 				}
 				count++;
