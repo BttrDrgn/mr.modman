@@ -19,6 +19,13 @@ void menus::init()
 
 	ImGui_ImplSDL2_InitForSDLRenderer(global::window, global::renderer);
 	ImGui_ImplSDLRenderer_Init(global::renderer);
+
+	//Style init
+	ImGuiStyle& s = ImGui::GetStyle();
+	s.PopupBorderSize = 0.0f;
+	s.WindowBorderSize = 0.0f;
+	s.ScrollbarSize = 5.0f;
+	s.ScrollbarRounding = 0.0f;
 }
 
 void menus::prepare()
@@ -111,6 +118,9 @@ void menus::menu_bar()
 
 				menus::global_mods = fs::get_all_files(
 					fs::get_pref_dir().append(logger::va("mods\\%s\\_global", menus::current_game.name.c_str())));
+
+				std::sort(menus::pack_mods.begin(), menus::pack_mods.end());
+				std::sort(menus::global_mods.begin(), menus::global_mods.end());
 
 				menus::show_mods = !menus::show_mods;
 			}
@@ -459,7 +469,7 @@ void menus::mods()
 	if (menus::show_mods)
 	{
 		ImGuiWindowFlags mods_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar;
-		ImVec2 size = {300, 400};
+		ImVec2 size = {350, 400};
 		ImVec2 prev_pos;
 
 		ImGui::SetNextWindowSize(size);
@@ -485,13 +495,13 @@ void menus::mods()
 			{
 				ImGui::Text(mod.c_str());
 				ImGui::SameLine();
-				ImGui::SetCursorPosX(size.x - 20);
+				ImGui::SetCursorPosX(size.x - 25);
 
 				for (auto ext : menus::settings_exts)
 				{
 					if (logger::ends_with(mod, ext))
 					{
-						ImGui::SetCursorPosX(size.x - 42);
+						ImGui::SetCursorPosX(size.x - 47);
 
 						if (ImGui::Button(logger::va("S##%s_global", mod.c_str()).c_str()))
 						{
@@ -542,13 +552,13 @@ void menus::mods()
 			{
 				ImGui::Text(mod.c_str());
 				ImGui::SameLine();
-				ImGui::SetCursorPosX(size.x - 20);
+				ImGui::SetCursorPosX(size.x - 25);
 
 				for (auto ext : menus::settings_exts)
 				{
 					if (logger::ends_with(mod, ext))
 					{
-						ImGui::SetCursorPosX(size.x - 42);
+						ImGui::SetCursorPosX(size.x - 47);
 
 						if (ImGui::Button(logger::va("S##%s_pack", mod.c_str()).c_str()))
 						{
