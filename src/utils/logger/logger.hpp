@@ -96,7 +96,7 @@ public:
 		}));
 	}
 
-	static void yo_upper(std::string& string)
+	static void to_upper(std::string& string)
 	{
 		std::for_each(string.begin(), string.end(), ([](char& c)
 		{
@@ -109,4 +109,20 @@ public:
 		if (ending.size() > value.size()) return false;
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
+
+	static std::string replace(const std::string& orig, const std::string& fnd, const std::string& repl)
+	{
+		std::string ret = orig;
+		size_t pos = 0;
+		while (true)
+		{
+			pos = ret.find(fnd, pos);
+			if (pos == std::string::npos) break;
+
+			ret.replace(pos, pos + fnd.size(), repl);
+			pos += repl.size();
+		}
+		return ret;
+	}
+
 };

@@ -33,7 +33,7 @@ void menus::prepare()
 	ImGui_ImplSDLRenderer_NewFrame();
 	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
-	SDL_SetRenderDrawColor(global::renderer, 30, 30, 30, 255);
+	SDL_SetRenderDrawColor(global::renderer, menus::background_col.r, menus::background_col.g, menus::background_col.b, menus::background_col.a);
 	SDL_RenderClear(global::renderer);
 }
 
@@ -171,7 +171,27 @@ void menus::file()
 	{
 		if (ImGui::Button("New Game")) menus::show_new_game = true;
 		menus::load_game();
-		ImGui::Text("__________");
+
+		ImGui::NewLine();
+
+		if (ImGui::Button("Open Directory"))
+		{
+			fs::open_folder(fs::get_pref_dir());
+		}
+
+		if (menus::current_game.name != "")
+		{
+			menus::spacer();
+			menus::delete_game();
+		}
+
+		menus::spacer();
+
+		if (ImGui::Button("Minimize"))
+		{
+			SDL_MinimizeWindow(global::window);
+		}
+
 		if(ImGui::Button("Exit")) global::shutdown = true;
 		ImGui::EndMenu();
 	}
@@ -183,6 +203,13 @@ void menus::packs()
 	{
 		if (ImGui::Button("New Pack")) menus::show_new_packs = true;
 		menus::load_pack();
+
+		if (menus::current_game.name != "" && menus::current_game.pack != "")
+		{
+			menus::spacer();
+			menus::delete_pack();
+		}
+
 		ImGui::EndMenu();
 	}
 }
@@ -197,9 +224,8 @@ void menus::console()
 		{
 			ImGui::Text(entry.c_str());
 		}
-
-		ImGui::EndChild();
 	}
+	ImGui::EndChild();
 }
 
 void menus::new_game()
@@ -390,6 +416,28 @@ void menus::load_game()
 	}
 }
 
+void menus::delete_game()
+{
+	if (ImGui::Button(logger::va("Delete %s", menus::current_game.name.c_str()).c_str()))
+	{
+		fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name), true);
+		menus::show_mods = false;
+		menus::games.erase(std::find(menus::games.begin(), menus::games.end(), menus::current_game.name));
+		menus::current_game = {};
+	}
+}
+
+void menus::delete_pack()
+{
+	if (ImGui::Button(logger::va("Delete %s", menus::current_game.pack.c_str()).c_str()))
+	{
+		fs::del(fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack), true);
+		menus::show_mods = false;
+		menus::current_game.packs.erase(std::find(menus::current_game.packs.begin(), menus::current_game.packs.end(), menus::current_game.pack));
+		menus::current_game.pack = "";
+	}
+}
+
 void menus::new_pack()
 {
 	if (menus::show_new_packs)
@@ -442,8 +490,8 @@ void menus::new_pack()
 				menus::clear_buffer(menus::pack_name_buffer, sizeof(menus::pack_name_buffer));
 
 			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 }
 
@@ -625,6 +673,12 @@ void menus::clear_buffer(char* buffer, size_t size)
 	memset(buffer, 0, size);
 }
 
+void menus::spacer()
+{
+	ImGui::Separator();
+	ImGui::NewLine();
+}
+
 char menus::game_path_buffer[MAX_PATH];
 char menus::game_name_buffer[32];
 char menus::pack_name_buffer[32];
@@ -644,3 +698,5 @@ std::initializer_list<std::string> menus::settings_exts = {".ini", ".cfg"};
 std::vector<std::string> menus::console_output;
 std::vector<std::string> menus::games;
 game_t menus::current_game;
+
+color_t menus::background_col = { 30, 30, 30, 255 };

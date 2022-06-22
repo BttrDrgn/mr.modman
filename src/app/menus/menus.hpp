@@ -6,6 +6,11 @@ struct game_t
 	std::vector<std::string> packs;
 };
 
+struct color_t
+{
+	int r, g, b, a;
+};
+
 class menus
 {
 public:
@@ -29,13 +34,15 @@ public:
 	static std::vector<std::string> pack_mods;
 	static game_t current_game;
 
+	static color_t background_col;
+
 private:
 	static void build_font(ImGuiIO& io);
 	static void clear_buffer(char* bufffer, size_t size);
 
 	static ImVec4 rgba_to_col(float r, float g, float b, float a)
 	{
-		return ImVec4{r/255.0f, g/255.0f, b/255.0f, a/255.0f};
+		return ImVec4{ r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
 	}
 
 	static void menu_bar();
@@ -43,10 +50,14 @@ private:
 	static void packs();
 
 	static void load_game();
+	static void delete_game();
 	static void load_pack();
+	static void delete_pack();
 
 	static void new_game();
 	static void new_pack();
+
+	static void spacer();
 
 	static void mods();
 
