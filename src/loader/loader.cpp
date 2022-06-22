@@ -1,6 +1,8 @@
 #include "loader.hpp"
-#include "../utils/logger/logger.hpp"
-#include "../utils/fs/fs.hpp"
+
+#include "logger/logger.hpp"
+#include "fs/fs.hpp"
+#include "hook/hook.hpp"
 
 bool has_tls = false;
 unsigned long entry_point = 0;
@@ -231,8 +233,35 @@ void loader::load(const char* bin_name)
     }
 }
 
-char* game_name;
-char* pack_name;
+std::string game_name;
+std::string pack_name;
+
+static BOOL(__stdcall* oReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+BOOL __stdcall read_file(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+{
+	char buf[256];
+	GetFinalPathNameByHandleA(hFile, buf, 256, 0x0);
+
+	std::string replacer = logger::replace(buf, "\\\\?\\" + std::filesystem::current_path().string() + "\\", "");
+
+	//Global will load before pack!
+	std::string global = logger::va("%s%s", fs::get_pref_dir().append("mods\\" + game_name + "\\_global\\").c_str(), replacer.c_str());
+	if (fs::exists(global))
+	{
+		logger::log_debug(global);
+		return oReadFile(CreateFileA(global.c_str(), 0x80000000, 0, 0, 3u, 0x100u, 0), lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+	}
+
+	//Load pack if global doesnt exist
+	std::string pack = logger::va("%s%s", fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + "\\").c_str(), replacer.c_str());
+	if (fs::exists(pack))
+	{
+		return oReadFile(CreateFileA(pack.c_str(), 0x80000000, 0, 0, 3u, 0x100u, 0), lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+	}
+
+	//Default if no files found
+	return oReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+}
 
 std::initializer_list<std::string> ext_whitelist
 {
@@ -242,6 +271,7 @@ std::initializer_list<std::string> ext_whitelist
 
 int init()
 {
+
 #ifdef DEBUG
     AllocConsole();
     SetConsoleTitleA("Loader Debug Console");
@@ -270,7 +300,7 @@ int init()
     }
 
     //Load _global
-    std::string global = fs::get_pref_dir().append(logger::va("mods\\%s\\_global\\", game_name));
+    std::string global = fs::get_pref_dir().append(logger::va("mods\\%s\\_global\\", game_name.c_str()));
     for (auto bin : fs::get_all_files(global))
     {
         for (auto ext : ext_whitelist)
@@ -284,8 +314,8 @@ int init()
     }
 
     //Load pack
-    std::string pack = fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name, pack_name));
-    for (auto bin : fs::get_all_files(fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name, pack_name))))
+    std::string pack = fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name.c_str(), pack_name.c_str()));
+    for (auto bin : fs::get_all_files(fs::get_pref_dir().append(logger::va("mods\\%s\\%s\\", game_name.c_str(), pack_name.c_str()))))
     {
         for (auto ext : ext_whitelist)
         {
@@ -296,6 +326,12 @@ int init()
             }
         }
     }
+
+	MH_Initialize();
+
+	MH_CreateHookApi(L"kernel32.dll", "ReadFile", (void**)&read_file, (void**)&oReadFile);
+
+	MH_EnableHook(MH_ALL_HOOKS);
 
     return loader::run(entry_point);
 }

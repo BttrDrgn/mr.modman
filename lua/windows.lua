@@ -138,23 +138,31 @@ workspace "Mr. Modman"
 		kind "windowedapp"
 		warnings "off"
 
-		defines "LOADER"
+		defines {
+			"LOADER",
+		}
 		
 		dependson {
 			"SDL2",
+			"MinHook",
 		}
 
 		links {
 			"SDL2",
-		}
-
-		files {
-			"../src/loader/**",
+			"MinHook",
 		}
 
 		includedirs {
 			"../src/loader/",
+			"../src/utils/",
+
 			"../deps/SDL/include/",
+			"../deps/minhook/include/",
+		}
+
+		files {
+			"../src/loader/**",
+			"../src/utils/**",
 		}
 
 		--Required for the loader to load the binary
