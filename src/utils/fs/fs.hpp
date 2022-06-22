@@ -163,7 +163,6 @@ public:
 	{
 		ShellExecuteA(global::hwnd, "open", file, 0, 0, 1);
 
-		logger::log_error(logger::va("%i", GetLastError()));
 		if (GetLastError() == ERROR_NO_ASSOCIATION)
 		{
 			ShellExecuteA(global::hwnd, "edit", file, 0, 0, 1);
