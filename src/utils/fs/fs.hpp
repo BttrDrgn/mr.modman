@@ -161,11 +161,12 @@ public:
 
 	static void open_editor(const char* file)
 	{
-		ShellExecuteA(0, "open", file, 0, 0, 0);
+		ShellExecuteA(global::hwnd, "open", file, 0, 0, 1);
 
+		logger::log_error(logger::va("%i", GetLastError()));
 		if (GetLastError() == ERROR_NO_ASSOCIATION)
 		{
-			ShellExecuteA(0, "edit", file, 0, 0, 0);
+			ShellExecuteA(global::hwnd, "edit", file, 0, 0, 1);
 		}
 	}
 
