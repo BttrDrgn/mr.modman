@@ -7,6 +7,9 @@
 #include <fstream>
 #include <functional>
 
+//Deps
+#include "MinHook.h"
+
 namespace loader
 {
     void load(const char* bin_name);
