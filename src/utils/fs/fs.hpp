@@ -74,7 +74,7 @@ public:
 		return retn;
 	}
 
-	static std::vector<std::string> get_all_dirs(const std::string& path)
+	static std::vector<std::string> get_all_dirs(const std::string& path, const std::string& append = "")
 	{
 		std::vector<std::string> retn;
 		for (const auto& entry : std::filesystem::directory_iterator(path))
@@ -82,7 +82,7 @@ public:
 			if (entry.is_directory())
 			{
 				std::vector<std::string> temp = logger::split(entry.path().string(), "\\");
-				retn.emplace_back(temp[temp.size() - 1]);
+				retn.emplace_back(temp[temp.size() - 1].append(append));
 			}
 		}
 
@@ -159,13 +159,13 @@ public:
 		SetCurrentDirectoryA(cwd.c_str());
 	}
 
-	static void open_editor(const char* file)
+	static void open_editor(const std::string& file)
 	{
-		ShellExecuteA(global::hwnd, "open", file, 0, 0, 1);
+		ShellExecuteA(global::hwnd, "open", file.c_str(), 0, 0, 1);
 
 		if (GetLastError() == ERROR_NO_ASSOCIATION)
 		{
-			ShellExecuteA(global::hwnd, "edit", file, 0, 0, 1);
+			ShellExecuteA(global::hwnd, "edit", file.c_str(), 0, 0, 1);
 		}
 	}
 

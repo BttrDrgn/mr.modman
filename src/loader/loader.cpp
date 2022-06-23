@@ -299,8 +299,7 @@ int init()
         else if (!strcmp("--cwd", __argv[i]))
         {
 			cwd = __argv[i + 1];
-			cwd.erase(cwd.length() - 1, 1);
-            SetCurrentDirectoryA(cwd.c_str());
+            SetCurrentDirectoryA(cwd.append("\\").c_str());
         }
         else if (!strcmp("--game", __argv[i]))
         {
@@ -346,8 +345,6 @@ int init()
 	MH_CreateHookApi(L"kernel32.dll", "CreateFileA", (void**)&create_file, (void**)&oCreateFile);
 
 	MH_EnableHook(MH_ALL_HOOKS);
-
-	MessageBoxA(0, 0, 0, 0);
 
     return loader::run(entry_point);
 }

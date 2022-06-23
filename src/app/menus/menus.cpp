@@ -113,14 +113,33 @@ void menus::menu_bar()
 		{
 			if (ImGui::Button("Mods"))
 			{
-				menus::pack_mods = fs::get_all_files(
-					fs::get_pref_dir().append(logger::va("mods\\%s\\%s", menus::current_game.name.c_str(), menus::current_game.pack.c_str())));
+				//Setup temp and reset pack_mods
+				auto temp = fs::get_all_dirs(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\" + menus::current_game.pack), "|f");
+				menus::pack_mods = temp;
 
-				menus::global_mods = fs::get_all_files(
-					fs::get_pref_dir().append(logger::va("mods\\%s\\_global", menus::current_game.name.c_str())));
+				if (menus::pack_mods.size() >= 1)
+				{
+					menus::pack_mods.emplace_back("||");
+				}
 
-				std::sort(menus::pack_mods.begin(), menus::pack_mods.end());
-				std::sort(menus::global_mods.begin(), menus::global_mods.end());
+				temp = fs::get_all_files(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\" + menus::current_game.pack));
+				menus::pack_mods.insert(menus::pack_mods.end(), temp.begin(), temp.end());
+				//End
+
+				//Global Mods
+				temp = fs::get_all_dirs(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\_global"), "|f");
+				menus::global_mods = temp;
+
+				if (menus::global_mods.size() >= 1)
+				{
+					menus::global_mods.emplace_back("||");
+				}
+
+				temp = fs::get_all_files(fs::get_pref_dir().append("mods\\" + menus::current_game.name + "\\_global"));
+				menus::global_mods.insert(menus::global_mods.end(), temp.begin(), temp.end());
+				//End
+
+				temp.clear();
 
 				menus::show_mods = !menus::show_mods;
 			}
@@ -134,21 +153,23 @@ void menus::menu_bar()
 				memset(&process_info, 0, sizeof(process_info));
 				startup_info.cb = sizeof(startup_info);
 
-				logger::log_debug(fs::get_cur_dir());
+				//For compatibility with old INIs
+				if (menus::current_game.cwd.back() == '\\')
+				{
+					menus::current_game.cwd = menus::current_game.cwd.erase(menus::current_game.cwd.size() - 1, 1);
+				}
 
 				CreateProcessA
 				(
 					fs::get_cur_dir().append("loader.exe").c_str(),
-
 					logger::va
 					(
-						"--exe %s --cwd %s --game %s --modpack \"%s\"",
+						"--exe \"%s\" --cwd \"%s\" --game \"%s\" --modpack \"%s\"",
 						menus::current_game.path.c_str(),
 						menus::current_game.cwd.c_str(),
 						menus::current_game.name.c_str(),
 						menus::current_game.pack.c_str()
 					).data(),
-
 					nullptr,
 					nullptr,
 					false,
@@ -363,7 +384,7 @@ void menus::new_game()
 				std::vector<std::string> temp = logger::split(path, "\\");
 				for (auto i = 0; i < temp.size() - 1; i++)
 				{
-					game_cwd.append(temp[i] + "\\");
+					game_cwd.append(temp[i]);
 				}
 
 				std::string ini = logger::va("[game]\nPath=%s\nCWD=%s", menus::game_path_buffer, game_cwd.c_str());
@@ -504,6 +525,7 @@ void menus::load_pack()
 			if (pack.compare("_global") && ImGui::Button(pack.c_str()))
 			{
 				menus::current_game.pack = pack;
+				menus::show_mods = false;
 				logger::log_info(logger::va("Pack %s loaded!", pack.c_str()));
 			}
 		}
@@ -541,30 +563,65 @@ void menus::mods()
 			int count = 0;
 			for (auto mod : menus::global_mods)
 			{
+				if (mod == "||")
+				{
+					menus::spacer();
+					continue;
+				}
+
+				bool folder = false;
+				if (mod.find("|f") != std::string::npos)
+				{
+					mod = mod.erase(mod.size() - 2, 2);
+					folder = true;
+				}
+
 				ImGui::Text(mod.c_str());
 				ImGui::SameLine();
 				ImGui::SetCursorPosX(size.x - 25);
 
-				for (auto ext : menus::settings_exts)
+				if (folder)
 				{
-					if (logger::ends_with(mod, ext))
+					ImGui::SetCursorPosX(size.x - 53);
+
+					if (ImGui::Button(logger::va("...##%s_pack", mod.c_str()).c_str()))
 					{
-						ImGui::SetCursorPosX(size.x - 47);
+						std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
+						fs::open_folder(file);
+					}
 
-						if (ImGui::Button(logger::va("S##%s_global", mod.c_str()).c_str()))
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("Click to open...");
+						ImGui::EndTooltip();
+					}
+
+					ImGui::SameLine();
+				}
+				else
+				{
+					for (auto ext : menus::settings_exts)
+					{
+						if (logger::ends_with(mod, ext))
 						{
-							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod);
-							fs::open_editor(file.c_str());
+							ImGui::SetCursorPosX(size.x - 47);
+
+							if (ImGui::Button(logger::va("S##%s_global", mod.c_str()).c_str()))
+							{
+								std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/_global/" + mod);
+								fs::open_editor(file);
+							}
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::BeginTooltip();
+								ImGui::Text("Click to editt...");
+								ImGui::EndTooltip();
+							}
+
+							ImGui::SameLine();
 						}
-
-						if (ImGui::IsItemHovered())
-						{
-							ImGui::BeginTooltip();
-							ImGui::Text("Click to edit...");
-							ImGui::EndTooltip();
-						} 
-
-						ImGui::SameLine();
 					}
 				}
 
@@ -598,30 +655,65 @@ void menus::mods()
 			int count = 0;
 			for (auto mod : menus::pack_mods)
 			{
+				if (mod == "||")
+				{
+					menus::spacer();
+					continue;
+				}
+
+				bool folder = false;
+				if (mod.find("|f") != std::string::npos)
+				{
+					mod = mod.erase(mod.size() - 2, 2);
+					folder = true;
+				}
+
 				ImGui::Text(mod.c_str());
 				ImGui::SameLine();
 				ImGui::SetCursorPosX(size.x - 25);
 
-				for (auto ext : menus::settings_exts)
+				if (folder)
 				{
-					if (logger::ends_with(mod, ext))
+					ImGui::SetCursorPosX(size.x - 53);
+
+					if (ImGui::Button(logger::va("...##%s_pack", mod.c_str()).c_str()))
 					{
-						ImGui::SetCursorPosX(size.x - 47);
+						std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
+						fs::open_folder(file);
+					}
 
-						if (ImGui::Button(logger::va("S##%s_pack", mod.c_str()).c_str()))
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("Click to open...");
+						ImGui::EndTooltip();
+					}
+
+					ImGui::SameLine();
+				}
+				else
+				{
+					for (auto ext : menus::settings_exts)
+					{
+						if (logger::ends_with(mod, ext))
 						{
-							std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
-							fs::open_editor(file.c_str());
-						}
+							ImGui::SetCursorPosX(size.x - 47);
 
-						if (ImGui::IsItemHovered())
-						{
-							ImGui::BeginTooltip();
-							ImGui::Text("Click to edit...");
-							ImGui::EndTooltip();
-						}
+							if (ImGui::Button(logger::va("S##%s_pack", mod.c_str()).c_str()))
+							{
+								std::string file = fs::get_pref_dir().append("mods/" + menus::current_game.name + "/" + menus::current_game.pack + "/" + mod);
+								fs::open_editor(file);
+							}
 
-						ImGui::SameLine();
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::BeginTooltip();
+								ImGui::Text("Click to edit...");
+								ImGui::EndTooltip();
+							}
+
+							ImGui::SameLine();
+						}
 					}
 				}
 
