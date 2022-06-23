@@ -21,6 +21,8 @@ public:
 	static void present();
 	static void cleanup();
 
+	static void load_game(const std::string& game_name = "");
+
 	static char game_path_buffer[MAX_PATH];
 	static char game_name_buffer[32];
 	static char pack_name_buffer[32];
@@ -33,6 +35,8 @@ public:
 	static std::vector<std::string> global_mods;
 	static std::vector<std::string> pack_mods;
 	static game_t current_game;
+
+	static std::string default_game;
 
 	static color_t background_col;
 
@@ -49,7 +53,7 @@ private:
 	static void file();
 	static void packs();
 
-	static void load_game();
+	static void set_default();
 	static void delete_game();
 	static void load_pack();
 	static void delete_pack();

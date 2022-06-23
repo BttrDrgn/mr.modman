@@ -25,11 +25,31 @@ void settings::update()
 			settings::update();
 			return;
 		}
+
+		std::string config_string = ini_tostring(config);
+
+		if (config_string.find("default_game") != std::string::npos)
+		{
+			auto default_game = ini_get(config, "core", "default_game");
+
+			if (strcmp(default_game, " "))
+			{
+				menus::load_game(default_game);
+			}
+		}
+		else
+		{
+			fs::del(settings::config_file);
+			settings::update();
+			return;
+		}
+
 	}
 	else if (!fs::exists(settings::config_file))
 	{
 		std::string ini_default = logger::va(
 			"[core]\n"
+			"default_game = \" \"\n"
 			"version = \"%s\"\n\n"
 
 			"[colors]\n"
