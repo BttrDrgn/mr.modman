@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cstdio>
+#include <regex>
 
 #ifndef LOADER
 #include "../app/menus/menus.hpp"
@@ -110,19 +111,9 @@ public:
 		return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 	}
 
-	static std::string replace(const std::string& orig, const std::string& fnd, const std::string& repl)
+	static std::string replace(std::string const& in, std::string const& from, std::string const& to)
 	{
-		std::string ret = orig;
-		size_t pos = 0;
-		while (true)
-		{
-			pos = ret.find(fnd, pos);
-			if (pos == std::string::npos) break;
-
-			ret.replace(pos, pos + fnd.size(), repl);
-			pos += repl.size();
-		}
-		return ret;
+		return std::regex_replace(in, std::regex(from), to);
 	}
 
 };
