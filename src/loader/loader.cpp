@@ -272,20 +272,23 @@ HANDLE __stdcall create_file(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 	//Or potentially relative
 	else
 	{
-		//Global comes first
-		std::string global = fs::get_pref_dir().append("mods\\" + game_name + "\\_global\\" + file_name);
-		if (fs::exists(file_name))
+		if (file_name.find(getenv("LOCALAPPDATA")) == std::string::npos)
 		{
-			//logger::log("GLOBAL", global);
-			return oCreateFile(global.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-		}
+			//Global comes first
+			std::string global = fs::get_pref_dir().append("mods\\" + game_name + "\\_global\\" + file_name);
+			if (fs::exists(file_name))
+			{
+				//logger::log("GLOBAL", global);
+				return oCreateFile(global.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			}
 
-		//Then pack
-		std::string pack = fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + "\\" +  file_name);
-		if (fs::exists(pack))
-		{
-			//logger::log("PACK", pack);
-			return oCreateFile(pack.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			//Then pack
+			std::string pack = fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + "\\" + file_name);
+			if (fs::exists(pack))
+			{
+				//logger::log("PACK", pack);
+				return oCreateFile(pack.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			}
 		}
 	}
 
