@@ -202,6 +202,7 @@ void menus::file()
 
 		if (menus::current_game.name != "")
 		{
+			menus::set_default();
 			menus::spacer();
 			menus::delete_game();
 		}
@@ -408,32 +409,72 @@ void menus::new_game()
 	}
 }
 
-void menus::load_game()
+void menus::load_game(const std::string& game_name)
 {
-	if (ImGui::BeginMenu("Load Game"))
+	if (game_name == "")
 	{
-		for (auto game : menus::games)
+		if (ImGui::BeginMenu("Load Game"))
 		{
-			if (ImGui::Button(game.c_str()))
+			for (auto game : menus::games)
 			{
-				ini_t* ini = ini_load(fs::get_pref_dir().append(logger::va("mods\\%s\\config.ini", game.c_str())).c_str());
-
-				std::string path = ini_get(ini, "game", "path");
-
-				menus::current_game =
+				if (ImGui::Button(game.c_str()))
 				{
-					game,
-					path,
-					ini_get(ini, "game", "cwd"),
-					"",
-					fs::get_all_dirs(fs::get_pref_dir().append(logger::va("mods\\%s", game.c_str())))
-				};
+					ini_t* ini = ini_load(fs::get_pref_dir().append(logger::va("mods\\%s\\config.ini", game.c_str())).c_str());
 
-				logger::log_info(logger::va("%s (%i packs) loaded!", menus::current_game.name.c_str(), menus::current_game.packs.size() - 1));
+					std::string path = ini_get(ini, "game", "path");
+
+					menus::current_game =
+					{
+						game,
+						path,
+						ini_get(ini, "game", "cwd"),
+						"",
+						fs::get_all_dirs(fs::get_pref_dir().append(logger::va("mods\\%s", game.c_str())))
+					};
+
+					logger::log_info(logger::va("%s (%i packs) loaded!", menus::current_game.name.c_str(), menus::current_game.packs.size() - 1));
+				}
 			}
-		}
 
-		ImGui::EndMenu();
+			ImGui::EndMenu();
+		}
+	}
+	else
+	{
+		std::string ini_file = fs::get_pref_dir().append("mods\\" + game_name + "\\config.ini");
+
+		if (fs::exists(ini_file))
+		{
+			ini_t* ini = ini_load(ini_file.c_str());
+
+			std::string path = ini_get(ini, "game", "path");
+
+			menus::current_game =
+			{
+				game_name,
+				path,
+				ini_get(ini, "game", "cwd"),
+				"",
+				fs::get_all_dirs(fs::get_pref_dir().append(logger::va("mods\\%s", game_name.c_str())))
+			};
+
+			logger::log_info(logger::va("Default game %s (%i packs) loaded!", menus::current_game.name.c_str(), menus::current_game.packs.size() - 1));
+		}
+		else
+		{
+			logger::log_error(logger::va("Default game %s not loaded! Unable to find path. Resetting default game.", menus::current_game.name.c_str(), menus::current_game.packs.size() - 1));
+		}
+	}
+}
+
+void menus::set_default()
+{
+	if (ImGui::Button(logger::va("Open %s On Startup", menus::current_game.name.c_str()).c_str()))
+	{
+		ini_t* config = ini_load(settings::config_file.c_str());
+		ini_set(config, "core", "default_game", menus::current_game.name.c_str());
+		ini_save(config, settings::config_file.c_str());
+		ini_free(config);
 	}
 }
 
@@ -790,5 +831,7 @@ std::initializer_list<std::string> menus::settings_exts = {".ini", ".cfg"};
 std::vector<std::string> menus::console_output;
 std::vector<std::string> menus::games;
 game_t menus::current_game;
+
+std::string menus::default_game = "";
 
 color_t menus::background_col = { 30, 30, 30, 255 };
