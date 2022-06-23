@@ -257,7 +257,7 @@ HANDLE __stdcall create_file(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 		std::string global = fs::get_pref_dir().append("mods\\" + game_name + "\\_global" + file_name);
 		if (fs::exists(file_name))
 		{
-			logger::log("GLOBAL", global);
+			//logger::log("GLOBAL", global);
 			return oCreateFile(global.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
 
@@ -265,7 +265,26 @@ HANDLE __stdcall create_file(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwS
 		std::string pack = fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + file_name);
 		if (fs::exists(pack))
 		{
-			logger::log("PACK", pack);
+			//logger::log("PACK", pack);
+			return oCreateFile(pack.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
+	}
+	//Or potentially relative
+	else
+	{
+		//Global comes first
+		std::string global = fs::get_pref_dir().append("mods\\" + game_name + "\\_global\\" + file_name);
+		if (fs::exists(file_name))
+		{
+			//logger::log("GLOBAL", global);
+			return oCreateFile(global.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
+
+		//Then pack
+		std::string pack = fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + "\\" +  file_name);
+		if (fs::exists(pack))
+		{
+			//logger::log("PACK", pack);
 			return oCreateFile(pack.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
 	}
@@ -299,7 +318,7 @@ int init()
         else if (!strcmp("--cwd", __argv[i]))
         {
 			cwd = __argv[i + 1];
-            SetCurrentDirectoryA(cwd.append("\\").c_str());
+            SetCurrentDirectoryA((cwd + "\\").c_str());
         }
         else if (!strcmp("--game", __argv[i]))
         {
