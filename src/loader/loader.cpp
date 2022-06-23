@@ -235,32 +235,43 @@ void loader::load(const char* bin_name)
 
 std::string game_name;
 std::string pack_name;
+std::string cwd;
 
-static BOOL(__stdcall* oReadFile)(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
-BOOL __stdcall read_file(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+static HANDLE(__stdcall* oCreateFile)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
+HANDLE __stdcall create_file(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	char buf[256];
-	GetFinalPathNameByHandleA(hFile, buf, 256, 0x0);
+	//Convert to string for easier string ops
+	//Would def be fast to use C
+	std::string file_name = lpFileName;
 
-	std::string replacer = logger::replace(buf, "\\\\?\\" + std::filesystem::current_path().string() + "\\", "");
-
-	//Global will load before pack!
-	std::string global = logger::va("%s%s", fs::get_pref_dir().append("mods\\" + game_name + "\\_global\\").c_str(), replacer.c_str());
-	if (fs::exists(global))
+	//If we found a file that is read from the game dir
+	if (file_name.find(cwd) != std::string::npos)
 	{
-		logger::log_debug(global);
-		return oReadFile(CreateFileA(global.c_str(), 0x80000000, 0, 0, 3u, 0x100u, 0), lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+		//Shorten the filename to the game dir
+		file_name = logger::replace(file_name, "/", "\\").erase(0, cwd.length());
+
+		//Global comes first
+		std::string global = fs::get_pref_dir().append("mods\\" + game_name + "\\_global" + file_name);
+		if (fs::exists(file_name))
+		{
+			logger::log("GLOBAL", global);
+			return oCreateFile(global.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
+
+		//Then pack
+		std::string pack = fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + file_name);
+		if (fs::exists(pack))
+		{
+			logger::log("PACK", pack);
+			return oCreateFile(pack.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
 	}
 
-	//Load pack if global doesnt exist
-	std::string pack = logger::va("%s%s", fs::get_pref_dir().append("mods\\" + game_name + "\\" + pack_name + "\\").c_str(), replacer.c_str());
-	if (fs::exists(pack))
-	{
-		return oReadFile(CreateFileA(pack.c_str(), 0x80000000, 0, 0, 3u, 0x100u, 0), lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
-	}
-
-	//Default if no files found
-	return oReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
+	//Then original if nothing found
+	return oCreateFile(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
 std::initializer_list<std::string> ext_whitelist
@@ -287,7 +298,9 @@ int init()
         }
         else if (!strcmp("--cwd", __argv[i]))
         {
-            SetCurrentDirectoryA(__argv[i + 1]);
+			cwd = __argv[i + 1];
+			cwd.erase(cwd.length() - 1, 1);
+            SetCurrentDirectoryA(cwd.c_str());
         }
         else if (!strcmp("--game", __argv[i]))
         {
@@ -329,9 +342,12 @@ int init()
 
 	MH_Initialize();
 
-	MH_CreateHookApi(L"kernel32.dll", "ReadFile", (void**)&read_file, (void**)&oReadFile);
+	//MH_CreateHookApi(L"kernel32.dll", "ReadFile", (void**)&read_file, (void**)&oReadFile);
+	MH_CreateHookApi(L"kernel32.dll", "CreateFileA", (void**)&create_file, (void**)&oCreateFile);
 
 	MH_EnableHook(MH_ALL_HOOKS);
+
+	MessageBoxA(0, 0, 0, 0);
 
     return loader::run(entry_point);
 }
