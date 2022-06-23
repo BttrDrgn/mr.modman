@@ -385,7 +385,7 @@ void menus::new_game()
 				std::vector<std::string> temp = logger::split(path, "\\");
 				for (auto i = 0; i < temp.size() - 1; i++)
 				{
-					game_cwd.append(temp[i]);
+					game_cwd.append(temp[i] + "\\");
 				}
 
 				std::string ini = logger::va("[game]\nPath=%s\nCWD=%s", menus::game_path_buffer, game_cwd.c_str());
